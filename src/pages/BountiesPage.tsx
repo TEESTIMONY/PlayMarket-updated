@@ -241,7 +241,7 @@ const BountiesPage: React.FC = () => {
       <Sidebar>
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4 text-red-600">Error</h2>
+            <h2 className="text-2xl font-bold mb-4 text-red">Error</h2>
             <p className="text-gray-600 mb-4">{error}</p>
             <button
               onClick={() => fetchBounties(true)}
