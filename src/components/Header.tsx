@@ -40,6 +40,10 @@ const Header: React.FC = () => {
         <img
           src="/peGO.png"
           alt="PlayMarket Logo"
+          loading="lazy"
+          width="150"
+          height="150"
+          style={{ maxWidth: '150px', height: 'auto' }}
           className="h-10 hover:scale-105 transition-transform duration-200 cursor-pointer"
           onClick={() => handlePageClick('/')}
         />

@@ -50,10 +50,11 @@ const Sidebar: React.FC<SidebarProps> = React.memo(({ children }) => {
               <img
                 src="/peGO.png"
                 alt="PlayMarket Logo"
+                loading="lazy"
+                width="150"
+                height="150"
+                style={{ maxWidth: '150px', height: 'auto' }}
                 className="h-12 w-auto"
-                loading="eager"
-                width="48"
-                height="48"
               />
             </div>
           </div>
@@ -148,7 +149,7 @@ const Sidebar: React.FC<SidebarProps> = React.memo(({ children }) => {
                 alt="PlayMarket Logo"
                 className="h-8 w-auto hover:scale-105 transition-transform duration-200 cursor-pointer"
                 onClick={() => handleNavigation('/')}
-                loading="eager"
+                loading="lazy"
               />
             </div>
 

@@ -47,9 +47,13 @@ const AdminLoginPage: React.FC = () => {
         {/* Logo Section */}
         <div className="flex justify-center mb-8">
           <div className="rounded-2xl p-6">
-            <img
+              <img
               src="/peGO.png"
               alt="PlayMarket Logo"
+              loading="lazy"
+              width="150"
+              height="150"
+              style={{ maxWidth: '150px', height: 'auto' }}
               className="h-16 w-auto"
             />
           </div>

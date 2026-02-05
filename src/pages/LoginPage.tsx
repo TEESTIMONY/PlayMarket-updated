@@ -58,6 +58,10 @@ const LoginPage: React.FC = () => {
             <img
               src="/peGO.png"
               alt="PlayMarket Logo"
+              loading="lazy"
+              width="150"
+              height="150"
+              style={{ maxWidth: '150px', height: 'auto' }}
               className="h-16 w-auto"
             />
           </div>
