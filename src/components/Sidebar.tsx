@@ -48,12 +48,12 @@ const Sidebar: React.FC<SidebarProps> = React.memo(({ children }) => {
           <div className="p-8 pb-6">
             <div className="flex justify-center">
               <img
-                src="/PM LOGO BLACK .png"
+                src="/peGO.png"
                 alt="PlayMarket Logo"
-                className="h-16 w-auto"
+                className="h-12 w-auto"
                 loading="eager"
-                width="64"
-                height="64"
+                width="48"
+                height="48"
               />
             </div>
           </div>
@@ -144,9 +144,9 @@ const Sidebar: React.FC<SidebarProps> = React.memo(({ children }) => {
             {/* Center: Logo (Absolutely Centered) */}
             <div className="absolute left-1/2 transform -translate-x-1/2 z-20">
               <img
-                src="/PM LOGO BLACK .png"
+                src="/peGO.png"
                 alt="PlayMarket Logo"
-                className="h-10 w-auto hover:scale-105 transition-transform duration-200 cursor-pointer"
+                className="h-8 w-auto hover:scale-105 transition-transform duration-200 cursor-pointer"
                 onClick={() => handleNavigation('/')}
                 loading="eager"
               />
