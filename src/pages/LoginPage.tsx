@@ -65,23 +65,26 @@ const LoginPage: React.FC = () => {
         <div className="w-full max-w-sm text-center">
           {/* Logo */}
           <div className="flex justify-center mb-12">
-            <img
-              src="/peGO.png"
-              alt="PlayMarket Logo"
-              loading="lazy"
-              width="150"
-              height="150"
-              style={{ maxWidth: '150px', height: 'auto' }}
-              className="h-16 w-auto"
-              onError={(e) => {
-                // Fallback to a simple text logo if image fails to load
-                e.currentTarget.style.display = 'none';
-                const fallback = document.createElement('div');
-                fallback.className = 'text-black font-bold text-4xl text-center';
-                fallback.textContent = 'PlayMarket';
-                e.currentTarget.parentElement?.appendChild(fallback);
-              }}
-            />
+            <picture>
+              <source srcSet="/peGO.webp" type="image/webp" />
+              <img
+                src="/peGO.png"
+                alt="PlayMarket Logo"
+                loading="lazy"
+                width="150"
+                height="150"
+                style={{ maxWidth: '150px', height: 'auto' }}
+                className="h-16 w-auto"
+                onError={(e) => {
+                  // Fallback to a simple text logo if image fails to load
+                  e.currentTarget.style.display = 'none';
+                  const fallback = document.createElement('div');
+                  fallback.className = 'text-black font-bold text-4xl text-center';
+                  fallback.textContent = 'PlayMarket';
+                  e.currentTarget.parentElement?.appendChild(fallback);
+                }}
+              />
+            </picture>
           </div>
 
           {/* Typography */}

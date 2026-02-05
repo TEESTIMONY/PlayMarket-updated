@@ -37,25 +37,28 @@ const Header: React.FC = () => {
 
       {/* Center Container - Logo (Absolutely Centered) */}
       <div className="absolute left-1/2 transform -translate-x-1/2 z-20">
-        <img
-          src="/peGO.png"
-          alt="PlayMarket Logo"
-          loading="lazy"
-          width="150"
-          height="150"
-          style={{ maxWidth: '150px', height: 'auto' }}
-          className="h-10 hover:scale-105 transition-transform duration-200 cursor-pointer"
-          onClick={() => handlePageClick('/')}
-          onError={(e) => {
-            // Fallback to a simple text logo if image fails to load
-            e.currentTarget.style.display = 'none';
-            const fallback = document.createElement('div');
-            fallback.className = 'text-black font-bold text-2xl cursor-pointer hover:text-blue-600 transition-colors';
-            fallback.textContent = 'PlayMarket';
-            fallback.onclick = () => handlePageClick('/');
-            e.currentTarget.parentElement?.appendChild(fallback);
-          }}
-        />
+        <picture>
+          <source srcSet="/peGO.webp" type="image/webp" />
+          <img
+            src="/peGO.png"
+            alt="PlayMarket Logo"
+            loading="lazy"
+            width="150"
+            height="150"
+            style={{ maxWidth: '150px', height: 'auto' }}
+            className="h-10 hover:scale-105 transition-transform duration-200 cursor-pointer"
+            onClick={() => handlePageClick('/')}
+            onError={(e) => {
+              // Fallback to a simple text logo if image fails to load
+              e.currentTarget.style.display = 'none';
+              const fallback = document.createElement('div');
+              fallback.className = 'text-black font-bold text-2xl cursor-pointer hover:text-blue-600 transition-colors';
+              fallback.textContent = 'PlayMarket';
+              fallback.onclick = () => handlePageClick('/');
+              e.currentTarget.parentElement?.appendChild(fallback);
+            }}
+          />
+        </picture>
       </div>
 
       {/* Right Container - Navigation, Coin & User Icon */}
