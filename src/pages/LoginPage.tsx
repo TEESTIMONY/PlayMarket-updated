@@ -73,6 +73,14 @@ const LoginPage: React.FC = () => {
               height="150"
               style={{ maxWidth: '150px', height: 'auto' }}
               className="h-16 w-auto"
+              onError={(e) => {
+                // Fallback to a simple text logo if image fails to load
+                e.currentTarget.style.display = 'none';
+                const fallback = document.createElement('div');
+                fallback.className = 'text-black font-bold text-4xl text-center';
+                fallback.textContent = 'PlayMarket';
+                e.currentTarget.parentElement?.appendChild(fallback);
+              }}
             />
           </div>
 
