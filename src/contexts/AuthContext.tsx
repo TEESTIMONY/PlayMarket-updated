@@ -21,6 +21,7 @@ export const useAuth = () => {
   }
   return context;
 };
+// testtttt
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -46,9 +47,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Separate effect for balance management when authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      // Set initial mock balance
-      setBalance(1000);
-      localStorage.setItem('lastBalanceRefresh', Date.now().toString());
+      // Fetch real balance from API
+      const fetchBalance = async () => {
+        setBalanceLoading(true);
+        try {
+          const response = await apiService.getUserBalance();
+          setBalance(response.balance);
+          localStorage.setItem('lastBalanceRefresh', Date.now().toString());
+        } catch (error) {
+          console.error('Failed to refresh balance:', error);
+          // Keep existing balance or set to 0 if API fails
+          setBalance(prev => prev || 0);
+        } finally {
+          setBalanceLoading(false);
+        }
+      };
+      fetchBalance();
     }
   }, [isAuthenticated]);
 
@@ -65,9 +79,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const refreshBalance = async () => {
-    // Set mock balance for demonstration
-    setBalance(1000);
-    localStorage.setItem('lastBalanceRefresh', Date.now().toString());
+    if (!isAuthenticated) return;
+    
+    setBalanceLoading(true);
+    try {
+      const response = await apiService.getUserBalance();
+      setBalance(response.balance);
+      localStorage.setItem('lastBalanceRefresh', Date.now().toString());
+    } catch (error) {
+      console.error('Failed to refresh balance:', error);
+      // Keep existing balance or set to 0 if API fails
+      setBalance(prev => prev || 0);
+    } finally {
+      setBalanceLoading(false);
+    }
   };
 
   const logout = () => {

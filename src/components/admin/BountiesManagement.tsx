@@ -240,92 +240,100 @@ const BountiesManagement = forwardRef(({ onActionButtonVisibilityChange }: { onA
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {bounties.map((bounty) => (
-              <React.Fragment key={bounty.id}>
-                <tr className="hover:bg-gray-50 cursor-pointer" onClick={() => toggleRowExpansion(bounty.id)}>
-                  <td className="px-2 md:px-6 py-2 md:py-4 text-xs md:text-sm text-gray-900 max-w-32 md:max-w-none truncate md:whitespace-nowrap" title={bounty.title}>{bounty.title}</td>
-                  <td className="hidden md:table-cell px-2 md:px-6 py-2 md:py-4 text-xs md:text-sm text-gray-900 max-w-xs truncate">{bounty.description}</td>
-                  <td className="px-2 md:px-6 py-2 md:py-4 whitespace-nowrap text-xs md:text-sm text-gray-900">{bounty.reward} coins</td>
-                  <td className="px-2 md:px-6 py-2 md:py-4 whitespace-nowrap">
-                    <span className={`px-1 md:px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      bounty.status === 'available' ? 'bg-green text-green-800' :
-                      bounty.status === 'full' ? 'bg-yellow text-yellow-800' : 'bg-red text-red-800'
-                    }`}>
-                      {bounty.status}
-                    </span>
-                  </td>
-                  <td className="hidden md:table-cell px-2 md:px-6 py-2 md:py-4 whitespace-nowrap text-xs md:text-sm text-gray-900">
-                    {bounty.expires_at ? new Date(bounty.expires_at).toLocaleDateString() : 'No expiry'}
-                  </td>
-                  <td className="px-2 md:px-6 py-2 md:py-4 whitespace-nowrap text-xs md:text-sm font-medium">
-                    <div className="flex items-center justify-end space-x-1">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEdit(bounty);
-                        }}
-                        className="text-blue-600 hover:text-blue-900 p-1"
-                        title="Edit"
-                      >
-                        <FaEdit className="text-sm md:text-base" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(bounty.id);
-                        }}
-                        className="text-red hover:text-red-900 p-1"
-                        title="Delete"
-                      >
-                        <FaTrash className="text-sm md:text-base" />
-                      </button>
-                      <button
-                        onClick={() => toggleRowExpansion(bounty.id)}
-                        className="text-gray hover:text-gray-600 p-1 rounded hover:bg-gray-100"
-                        title={expandedRows.has(bounty.id) ? "Collapse" : "Expand"}
-                      >
-                        {expandedRows.has(bounty.id) ? <FaChevronDown /> : <FaChevronRight />}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                {expandedRows.has(bounty.id) && (
-                  <tr className="bg-gray-50">
-                    <td colSpan={6} className="px-2 md:px-12 py-4 max-w-none">
-                      <div className="overflow-hidden">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                          <div className="md:hidden">
-                            <span className="font-medium text-gray-700">Description:</span>
-                            <p className="mt-1 text-gray-900 break-words">{bounty.description}</p>
-                            <span className="font-medium text-gray-700 block mt-3">Expiry:</span>
-                            <span className="text-gray-900">{bounty.expires_at ? new Date(bounty.expires_at).toLocaleDateString() : 'No expiry'}</span>
-                          </div>
-                          <div className="md:hidden">
-                            <span className="font-medium text-gray-700">Full Details:</span>
-                            <div className="mt-2 space-y-1">
-                              <div className="break-all">ID: {bounty.id}</div>
-                              <div className="break-words">Title: {bounty.title}</div>
-                              <div>Reward: {bounty.reward} coins</div>
-                              <div>Status: {bounty.status}</div>
-                              <div>Expiry: {bounty.expires_at ? new Date(bounty.expires_at).toLocaleDateString() : 'No expiry'}</div>
-                            </div>
-                          </div>
-                          <div className="hidden md:block">
-                            <span className="font-medium text-gray-700">Additional Information:</span>
-                            <div className="mt-2 space-y-1">
-                              <div className="font-medium text-gray-700">Bounty ID: {bounty.id}</div>
-                              <div className="font-medium text-gray-700">Current Status: {bounty.status}</div>
-                              <div className="font-medium text-gray-700">Claims Left: {bounty.claims_left}</div>
-                              <div className="font-medium text-gray-700">Max Claims: {bounty.max_claims}</div>
-                            </div>
-                          </div>
-                        </div>
+            {bounties.length > 0 ? (
+              bounties.map((bounty) => (
+                <React.Fragment key={bounty.id}>
+                  <tr className="hover:bg-gray-50 cursor-pointer" onClick={() => toggleRowExpansion(bounty.id)}>
+                    <td className="px-2 md:px-6 py-2 md:py-4 text-xs md:text-sm text-gray-900 max-w-32 md:max-w-none truncate md:whitespace-nowrap" title={bounty.title}>{bounty.title}</td>
+                    <td className="hidden md:table-cell px-2 md:px-6 py-2 md:py-4 text-xs md:text-sm text-gray-900 max-w-xs truncate">{bounty.description}</td>
+                    <td className="px-2 md:px-6 py-2 md:py-4 whitespace-nowrap text-xs md:text-sm text-gray-900">{bounty.reward} coins</td>
+                    <td className="px-2 md:px-6 py-2 md:py-4 whitespace-nowrap">
+                      <span className={`px-1 md:px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        bounty.status === 'available' ? 'bg-green text-green-800' :
+                        bounty.status === 'full' ? 'bg-yellow text-yellow-800' : 'bg-red text-red-800'
+                      }`}>
+                        {bounty.status}
+                      </span>
+                    </td>
+                    <td className="hidden md:table-cell px-2 md:px-6 py-2 md:py-4 whitespace-nowrap text-xs md:text-sm text-gray-900">
+                      {bounty.expires_at ? new Date(bounty.expires_at).toLocaleDateString() : 'No expiry'}
+                    </td>
+                    <td className="px-2 md:px-6 py-2 md:py-4 whitespace-nowrap text-xs md:text-sm font-medium">
+                      <div className="flex items-center justify-end space-x-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(bounty);
+                          }}
+                          className="text-blue-600 hover:text-blue-900 p-1"
+                          title="Edit"
+                        >
+                          <FaEdit className="text-sm md:text-base" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(bounty.id);
+                          }}
+                          className="text-red hover:text-red-900 p-1"
+                          title="Delete"
+                        >
+                          <FaTrash className="text-sm md:text-base" />
+                        </button>
+                        <button
+                          onClick={() => toggleRowExpansion(bounty.id)}
+                          className="text-gray hover:text-gray-600 p-1 rounded hover:bg-gray-100"
+                          title={expandedRows.has(bounty.id) ? "Collapse" : "Expand"}
+                        >
+                          {expandedRows.has(bounty.id) ? <FaChevronDown /> : <FaChevronRight />}
+                        </button>
                       </div>
                     </td>
                   </tr>
-                )}
-              </React.Fragment>
-            ))}
+                  {expandedRows.has(bounty.id) && (
+                    <tr className="bg-gray-50">
+                      <td colSpan={6} className="px-2 md:px-12 py-4 max-w-none">
+                        <div className="overflow-hidden">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div className="md:hidden">
+                              <span className="font-medium text-gray-700">Description:</span>
+                              <p className="mt-1 text-gray-900 break-words">{bounty.description}</p>
+                              <span className="font-medium text-gray-700 block mt-3">Expiry:</span>
+                              <span className="text-gray-900">{bounty.expires_at ? new Date(bounty.expires_at).toLocaleDateString() : 'No expiry'}</span>
+                            </div>
+                            <div className="md:hidden">
+                              <span className="font-medium text-gray-700">Full Details:</span>
+                              <div className="mt-2 space-y-1">
+                                <div className="break-all">ID: {bounty.id}</div>
+                                <div className="break-words">Title: {bounty.title}</div>
+                                <div>Reward: {bounty.reward} coins</div>
+                                <div>Status: {bounty.status}</div>
+                                <div>Expiry: {bounty.expires_at ? new Date(bounty.expires_at).toLocaleDateString() : 'No expiry'}</div>
+                              </div>
+                            </div>
+                            <div className="hidden md:block">
+                              <span className="font-medium text-gray-700">Additional Information:</span>
+                              <div className="mt-2 space-y-1">
+                                <div className="font-medium text-gray-700">Bounty ID: {bounty.id}</div>
+                                <div className="font-medium text-gray-700">Current Status: {bounty.status}</div>
+                                <div className="font-medium text-gray-700">Claims Left: {bounty.claims_left}</div>
+                                <div className="font-medium text-gray-700">Max Claims: {bounty.max_claims}</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6} className="px-2 md:px-6 py-4 text-center text-gray-500">
+                  No bounties available
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
         </div>
@@ -651,8 +659,4 @@ const BountiesManagement = forwardRef(({ onActionButtonVisibilityChange }: { onA
 
 BountiesManagement.displayName = 'BountiesManagement';
 
-export default BountiesManagement;                              <span className="font-medium text-gray-700">Full Details:</span>
-BountiesManagement.displayName = 'BountiesManagement';
-
-
-BountiesManagement.displayName = 'BountiesManagement';
+export default BountiesManagement;

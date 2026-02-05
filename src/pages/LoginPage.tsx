@@ -18,9 +18,9 @@ const LoginPage: React.FC = () => {
     // Mock Google sign-in - in real implementation, this would integrate with Google OAuth
     console.log('Google sign-in clicked');
 
-    // Use the auth context to login with test credentials
+    // Use the auth context to login with admin credentials
     // In production, this would be replaced with actual Google OAuth
-    login('testuser', 'password123');
+    login('admin', 'SecureAdminPass123!');
 
     // Redirect to bounties page
     navigate('/bounties');

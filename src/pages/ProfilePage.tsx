@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Sidebar from '../components/Sidebar';
 import { FaUser, FaCoins, FaShoppingCart, FaTrophy, FaHistory, FaCog, FaHome, FaGavel } from 'react-icons/fa';
+import { useAuth } from '../contexts/AuthContext';
 
 interface User {
   id: string;
@@ -18,6 +19,7 @@ const ProfilePage = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { balance } = useAuth();
 
   // Mock user data - in real app this would come from context/API
   const [user] = useState<User>({

@@ -495,15 +495,22 @@ const BountiesPage: React.FC = () => {
                     Refresh
                   </button>
                 </div>
-            <div className="max-w-4xl mx-auto space-y-4">
-              {bounties.map((bounty) => (
+          <div className="max-w-4xl mx-auto space-y-4">
+            {bounties.length > 0 ? (
+              bounties.map((bounty) => (
                 <BountyCard
                   key={bounty.id}
                   bounty={bounty}
                   onClaim={handleClaimBounty}
                 />
-              ))}
-            </div>
+              ))
+            ) : (
+              <div className="text-center py-12">
+                <div className="text-gray-400 text-lg mb-4">No bounties available yet</div>
+                <p className="text-gray-500 text-sm">Check back later for new bounties to complete</p>
+              </div>
+            )}
+          </div>
           </div>
         </div>
       </Sidebar>
