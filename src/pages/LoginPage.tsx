@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useLoading } from '../contexts/LoadingContext';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { showLoading, hideLoading } = useLoading();
   const [username, setUsername] = useState('testuser');
   const [password, setPassword] = useState('password123');
 
@@ -14,16 +16,24 @@ const LoginPage: React.FC = () => {
     navigate('/bounties'); // Redirect to bounties page
   };
 
-  const handleGoogleSignIn = () => {
+  const handleGoogleSignIn = async () => {
     // Mock Google sign-in - in real implementation, this would integrate with Google OAuth
     console.log('Google sign-in clicked');
 
-    // Use the auth context to login with admin credentials
-    // In production, this would be replaced with actual Google OAuth
-    login('admin', 'SecureAdminPass123!');
+    // Show loading state during authentication
+    showLoading();
 
-    // Redirect to bounties page
-    navigate('/bounties');
+    try {
+      // Use the auth context to login with admin credentials
+      // In production, this would be replaced with actual Google OAuth
+      login('admin', 'SecureAdminPass123!');
+
+      // Redirect to bounties page
+      navigate('/bounties');
+    } finally {
+      // Always hide loading state
+      hideLoading();
+    }
   };
 
   return (
