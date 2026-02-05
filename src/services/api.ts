@@ -29,7 +29,7 @@ export interface BountyClaim {
 }
 
 class ApiService {
-  private baseURL = import.meta.env.VITE_API_BASE_URL;
+  private baseURL = import.meta.env.VITE_API_BASE_URL || 'https://playmarket-api.onrender.com';
 
   constructor() {
     if (!this.baseURL) {
