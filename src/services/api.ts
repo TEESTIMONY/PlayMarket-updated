@@ -29,7 +29,14 @@ export interface BountyClaim {
 }
 
 class ApiService {
-  private baseURL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+  private baseURL = import.meta.env.VITE_API_BASE_URL;
+
+  constructor() {
+    if (!this.baseURL) {
+      console.error('VITE_API_BASE_URL environment variable is not set. Please check your .env file.');
+      throw new Error('API base URL is not configured. Please set VITE_API_BASE_URL in your environment.');
+    }
+  }
 
   private async request(endpoint: string, options: RequestInit = {}): Promise<any> {
     const url = `${this.baseURL}${endpoint}`;
