@@ -37,28 +37,40 @@ const Header: React.FC = () => {
 
       {/* Center Container - Logo (Absolutely Centered) */}
       <div className="absolute left-1/2 transform -translate-x-1/2 z-20">
-        <picture>
-          <source srcSet="/peGO.webp" type="image/webp" />
-          <img
-            src="/peGO.png"
-            alt="PlayMarket Logo"
-            loading="lazy"
-            width="150"
-            height="150"
-            style={{ maxWidth: '150px', height: 'auto' }}
-            className="h-10 hover:scale-105 transition-transform duration-200 cursor-pointer"
-            onClick={() => handlePageClick('/')}
-            onError={(e) => {
-              // Fallback to a simple text logo if image fails to load
-              e.currentTarget.style.display = 'none';
+        <img
+          src="/peGO.webp"
+          alt="PlayMarket Logo"
+          loading="lazy"
+          width="150"
+          height="150"
+          style={{ maxWidth: '150px', height: 'auto' }}
+          className="h-10 hover:scale-105 transition-transform duration-200 cursor-pointer"
+          onClick={() => handlePageClick('/')}
+          onError={(e) => {
+            // Fallback to PNG if WebP fails, then text if PNG also fails
+            const img = e.currentTarget as HTMLImageElement;
+            if (img.src.endsWith('.webp')) {
+              img.src = '/peGO.png';
+              img.onerror = () => {
+                // Final fallback to text if both WebP and PNG fail
+                img.style.display = 'none';
+                const fallback = document.createElement('div');
+                fallback.className = 'text-black font-bold text-2xl cursor-pointer hover:text-blue-600 transition-colors';
+                fallback.textContent = 'PlayMarket';
+                fallback.onclick = () => handlePageClick('/');
+                img.parentElement?.appendChild(fallback);
+              };
+            } else {
+              // PNG failed, fallback to text
+              img.style.display = 'none';
               const fallback = document.createElement('div');
               fallback.className = 'text-black font-bold text-2xl cursor-pointer hover:text-blue-600 transition-colors';
               fallback.textContent = 'PlayMarket';
               fallback.onclick = () => handlePageClick('/');
-              e.currentTarget.parentElement?.appendChild(fallback);
-            }}
-          />
-        </picture>
+              img.parentElement?.appendChild(fallback);
+            }
+          }}
+        />
       </div>
 
       {/* Right Container - Navigation, Coin & User Icon */}

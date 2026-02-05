@@ -65,26 +65,37 @@ const LoginPage: React.FC = () => {
         <div className="w-full max-w-sm text-center">
           {/* Logo */}
           <div className="flex justify-center mb-12">
-            <picture>
-              <source srcSet="/peGO.webp" type="image/webp" />
-              <img
-                src="/peGO.png"
-                alt="PlayMarket Logo"
-                loading="lazy"
-                width="200"
-                height="200"
-                style={{ maxWidth: '200px', height: 'auto' }}
-                className="h-20 w-auto"
-                onError={(e) => {
-                  // Fallback to a simple text logo if image fails to load
-                  e.currentTarget.style.display = 'none';
+            <img
+              src="/peGO.webp"
+              alt="PlayMarket Logo"
+              loading="lazy"
+              width="150"
+              height="150"
+              style={{ maxWidth: '150px', height: 'auto' }}
+              className="h-16 w-auto"
+              onError={(e) => {
+                // Fallback to PNG if WebP fails, then text if PNG also fails
+                const img = e.currentTarget as HTMLImageElement;
+                if (img.src.endsWith('.webp')) {
+                  img.src = '/peGO.png';
+                  img.onerror = () => {
+                    // Final fallback to text if both WebP and PNG fail
+                    img.style.display = 'none';
+                    const fallback = document.createElement('div');
+                    fallback.className = 'text-black font-bold text-4xl text-center';
+                    fallback.textContent = 'PlayMarket';
+                    img.parentElement?.appendChild(fallback);
+                  };
+                } else {
+                  // PNG failed, fallback to text
+                  img.style.display = 'none';
                   const fallback = document.createElement('div');
                   fallback.className = 'text-black font-bold text-4xl text-center';
                   fallback.textContent = 'PlayMarket';
-                  e.currentTarget.parentElement?.appendChild(fallback);
-                }}
-              />
-            </picture>
+                  img.parentElement?.appendChild(fallback);
+                }
+              }}
+            />
           </div>
 
           {/* Typography */}
