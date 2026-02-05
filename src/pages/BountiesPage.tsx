@@ -29,10 +29,14 @@ const BountiesPage: React.FC = () => {
       const initializeData = async () => {
         try {
           setLoading(true);
-          const bountiesResponse = await apiService.getBounties();
-          setBounties(bountiesResponse.results);
           
-          const claimsResponse = await apiService.getUserClaims();
+          // Fetch bounties and claims in parallel for better performance
+          const [bountiesResponse, claimsResponse] = await Promise.all([
+            apiService.getBounties(),
+            apiService.getUserClaims()
+          ]);
+          
+          setBounties(bountiesResponse.results);
           const claimedBountyIds = new Set(claimsResponse.results.map(claim => claim.bounty));
           setClaimedBounties(claimedBountyIds);
           
@@ -439,33 +443,39 @@ const BountiesPage: React.FC = () => {
   const BountyCard = memo(({ bounty, onClaim }: {
     bounty: Bounty;
     onClaim: (bounty: Bounty) => void;
-  }) => (
-    <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-200 p-3 border border-gray-200 relative">
-      {/* Posted Time */}
-      <div className="absolute top-3 right-3 text-xs text-gray-400">
-        {bounty.posted_hours_ago}hrs ago
-      </div>
+  }) => {
+    // Memoize expensive calculations
+    const statusBadge = React.useMemo(() => getStatusBadge(bounty), [bounty.status, bounty.claims_left, bounty.time_left]);
+    const claimButton = React.useMemo(() => getClaimButton(bounty), [bounty.status, bounty.claims_left, claimingBounties, claimedBounties]);
+    
+    return (
+      <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-200 p-3 border border-gray-200 relative">
+        {/* Posted Time */}
+        <div className="absolute top-3 right-3 text-xs text-gray-400">
+          {bounty.posted_hours_ago}hrs ago
+        </div>
 
-      <div className="flex items-center justify-between">
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-lg text-gray-900 mb-1 truncate">{bounty.title}</h3>
-          <p className="text-gray-600 text-sm mb-3 line-clamp-2 leading-relaxed">{bounty.description}</p>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center bg-amber-50 px-2 py-1 rounded-md">
-                <FaCoins className="text-amber-500 mr-1.5 text-sm" />
-                <span className="font-semibold text-gray-900 text-sm">{bounty.reward}</span>
+        <div className="flex items-center justify-between">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-lg text-gray-900 mb-1 truncate">{bounty.title}</h3>
+            <p className="text-gray-600 text-sm mb-3 line-clamp-2 leading-relaxed">{bounty.description}</p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center bg-amber-50 px-2 py-1 rounded-md">
+                  <FaCoins className="text-amber-500 mr-1.5 text-sm" />
+                  <span className="font-semibold text-gray-900 text-sm">{bounty.reward}</span>
+                </div>
+                {statusBadge}
               </div>
-              {getStatusBadge(bounty)}
             </div>
           </div>
-        </div>
-        <div className="ml-4 flex-shrink-0">
-          {getClaimButton(bounty)}
+          <div className="ml-4 flex-shrink-0">
+            {claimButton}
+          </div>
         </div>
       </div>
-    </div>
-  ));
+    );
+  });
 
   BountyCard.displayName = 'BountyCard';
 
@@ -473,7 +483,6 @@ const BountiesPage: React.FC = () => {
     <>
       <Sidebar>
         <div className="flex-1 overflow-auto">
-
           {/* Campaign Banner */}
           <div className="bg-red text-white py-2 px-4 shadow-lg animate-pulse border-2 border-red-700">
             <div className="flex items-center justify-center max-w-6xl mx-auto">
@@ -486,31 +495,31 @@ const BountiesPage: React.FC = () => {
 
           {/* Bounties Section */}
           <div className="p-4 md:p-8">
-                <div className="flex items-center justify-between mb-6">
-                  <h1 className="text-3xl text-black text-left animate-fade-in">Bounties</h1>
-                  <button
-                    onClick={handleRefresh}
-                    className="bg-gray-200 text-gray-700 py-1 px-3 rounded-md text-sm hover:bg-gray-300 hover:text-gray-900 transition-colors border border-gray-300"
-                  >
-                    Refresh
-                  </button>
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-3xl text-black text-left animate-fade-in">Bounties</h1>
+              <button
+                onClick={handleRefresh}
+                className="bg-gray-200 text-gray-700 py-1 px-3 rounded-md text-sm hover:bg-gray-300 hover:text-gray-900 transition-colors border border-gray-300"
+              >
+                Refresh
+              </button>
+            </div>
+            <div className="max-w-4xl mx-auto space-y-4">
+              {bounties.length > 0 ? (
+                bounties.map((bounty) => (
+                  <BountyCard
+                    key={bounty.id}
+                    bounty={bounty}
+                    onClaim={handleClaimBounty}
+                  />
+                ))
+              ) : (
+                <div className="text-center py-12">
+                  <div className="text-gray-400 text-lg mb-4">No bounties available yet</div>
+                  <p className="text-gray-500 text-sm">Check back later for new bounties to complete</p>
                 </div>
-          <div className="max-w-4xl mx-auto space-y-4">
-            {bounties.length > 0 ? (
-              bounties.map((bounty) => (
-                <BountyCard
-                  key={bounty.id}
-                  bounty={bounty}
-                  onClaim={handleClaimBounty}
-                />
-              ))
-            ) : (
-              <div className="text-center py-12">
-                <div className="text-gray-400 text-lg mb-4">No bounties available yet</div>
-                <p className="text-gray-500 text-sm">Check back later for new bounties to complete</p>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
           </div>
         </div>
       </Sidebar>
