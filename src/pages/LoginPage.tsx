@@ -56,7 +56,7 @@ const LoginPage: React.FC = () => {
           {/* Logo */}
           <div className="flex justify-center mb-12">
             <img
-              src="/PM LOGO BLACK .png"
+              src="/peGO.png"
               alt="PlayMarket Logo"
               className="h-16 w-auto"
             />
