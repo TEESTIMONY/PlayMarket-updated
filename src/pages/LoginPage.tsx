@@ -71,10 +71,10 @@ const LoginPage: React.FC = () => {
                 src="/peGO.png"
                 alt="PlayMarket Logo"
                 loading="lazy"
-                width="120"
-                height="120"
-                style={{ maxWidth: '120px', height: 'auto' }}
-                className="h-12 w-auto"
+                width="200"
+                height="200"
+                style={{ maxWidth: '200px', height: 'auto' }}
+                className="h-20 w-auto"
                 onError={(e) => {
                   // Fallback to a simple text logo if image fails to load
                   e.currentTarget.style.display = 'none';
