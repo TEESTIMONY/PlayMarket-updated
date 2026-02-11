@@ -64,7 +64,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         
         // Send token to backend to get JWT
         try {
-          const response = await fetch('/api/auth/login/', {
+          const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+          const response = await fetch(`${baseURL}/api/auth/login/`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -139,7 +140,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.setItem('firebase_token', token);
       
       // Send token to backend to get JWT
-      const response = await fetch('/api/auth/login/', {
+      const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+      const response = await fetch(`${baseURL}/api/auth/login/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
