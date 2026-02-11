@@ -7,7 +7,7 @@
       "use": "@vercel/static-build",
       "config": {
         "distDir": "dist",
-        "installCommand": "npm install --legacy-peer-deps",
+        "installCommand": "npm install",
         "buildCommand": "npm run build"
       }
     }
