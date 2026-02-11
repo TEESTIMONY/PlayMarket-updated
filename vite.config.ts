@@ -29,6 +29,13 @@ export default defineConfig({
     fs: {
       // Allow serving files from one level up to the project root
       allow: ['..']
+    },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false
+      }
     }
   },
   // Vercel specific optimizations

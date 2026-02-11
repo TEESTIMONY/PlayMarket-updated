@@ -1,4 +1,11 @@
 // API service for connecting to backend
+import { 
+  SECURITY_CONFIG, 
+  sanitizeForLogging, 
+  handleApiError, 
+  validateApiResponse 
+} from '../config/security';
+
 export interface Bounty {
   id: number;
   title: string;
@@ -29,49 +36,52 @@ export interface BountyClaim {
 }
 
 class ApiService {
-  private baseURL = import.meta.env.VITE_API_BASE_URL || 'https://playmarket-api.onrender.com';
+  private baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
   constructor() {
     if (!this.baseURL) {
-      console.error('VITE_API_BASE_URL environment variable is not set. Please check your .env file.');
-      throw new Error('API base URL is not configured. Please set VITE_API_BASE_URL in your environment.');
+      // Silent failure for production - don't expose configuration errors to users
+      if (import.meta.env.DEV) {
+        console.warn('API base URL not configured. Using default.');
+      }
+      this.baseURL = 'http://localhost:8000';
     }
   }
 
   private async request(endpoint: string, options: RequestInit = {}): Promise<any> {
     const url = `${this.baseURL}${endpoint}`;
-    const token = localStorage.getItem('token');
-    const username = localStorage.getItem('username');
-    const password = localStorage.getItem('password');
-    
-    // Use Basic Auth if credentials are available
-    let authHeader = '';
-    if (username && password) {
-      const credentials = btoa(`${username}:${password}`);
-      authHeader = `Basic ${credentials}`;
-    } else if (token) {
-      authHeader = `Token ${token}`;
-    }
-    
+    const jwtToken = localStorage.getItem(SECURITY_CONFIG.TOKEN_STORAGE_KEY);
+
     const defaultOptions: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
-        ...(authHeader && { 'Authorization': authHeader }),
+        ...(jwtToken && { 'Authorization': `Bearer ${jwtToken}` }),
         ...options.headers
       },
       ...options
     };
 
     try {
-      const response = await fetch(url, defaultOptions);
-      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), SECURITY_CONFIG.API_TIMEOUT);
+
+      const response = await fetch(url, { ...defaultOptions, signal: controller.signal });
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const data = await response.json();
       
-      return await response.json();
+      // Validate response in development
+      if (import.meta.env.DEV && !validateApiResponse(data)) {
+        console.warn('API response validation failed');
+      }
+
+      return data;
     } catch (error) {
-      console.error('API request failed:', error);
+      handleApiError(error, `request to ${endpoint}`);
       throw error;
     }
   }
@@ -157,9 +167,6 @@ class ApiService {
     return this.request('/bounties/balance/');
   }
 
-  async getUserTransactions(): Promise<{ transactions: any[]; count: number }> {
-    return this.request('/bounties/transactions/');
-  }
 
   async adjustUserBalance(userId: number, amount: number, reason: string): Promise<any> {
     return this.request('/bounties/admin/adjust-balance/', {
@@ -169,6 +176,26 @@ class ApiService {
   }
 
   async getUserProfile(): Promise<any> {
+    return this.request('/bounties/profile/');
+  }
+
+  async getUserTransactions(): Promise<any> {
+    return this.request('/bounties/transactions/');
+  }
+
+  async getBountyClaimsHistory(): Promise<any> {
+    return this.request('/bounties/profile/claims/');
+  }
+
+  async getRedeemCodesHistory(): Promise<any> {
+    return this.request('/bounties/profile/redeem-codes/');
+  }
+
+  async getUserStatistics(): Promise<any> {
+    return this.request('/bounties/profile/statistics/');
+  }
+
+  async getProfile(): Promise<any> {
     return this.request('/bounties/profile/');
   }
 

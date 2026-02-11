@@ -66,6 +66,15 @@ jspm_packages/
 .env.test
 .env.production
 .env.local
+.env.production
+
+# Security: Never commit sensitive files
+*.key
+*.pem
+*.p12
+*.pfx
+secrets.json
+config/secrets.json
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache

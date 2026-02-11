@@ -54,7 +54,6 @@ const AdminPage: React.FC = () => {
     } else if (activeTab === 'redeem' && redeemRef.current) {
       redeemRef.current.openModal();
     }
-    console.log(`Action clicked for ${activeTab}`);
   };
 
   return (

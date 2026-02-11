@@ -6,12 +6,13 @@ import { useAuth } from '../contexts/AuthContext';
 
 interface SidebarProps {
   children: React.ReactNode;
+  hideMobileIcons?: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = React.memo(({ children }) => {
+const Sidebar: React.FC<SidebarProps> = React.memo(({ children, hideMobileIcons = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, balance, balanceLoading } = useAuth();
+  const { isAuthenticated, balance, balanceLoading, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navigationItems = useMemo(() => [
@@ -32,7 +33,7 @@ const Sidebar: React.FC<SidebarProps> = React.memo(({ children }) => {
   };
 
   const handleSignOut = () => {
-    // Handle sign out logic here
+    logout();
     navigate('/login');
   };
 
@@ -154,30 +155,32 @@ const Sidebar: React.FC<SidebarProps> = React.memo(({ children }) => {
             </div>
 
             {/* Right: Coin Balance + Profile Icon */}
-            <div className="flex items-center space-x-3 ml-auto z-10">
-              {/* Coin Balance */}
-              <div className="flex items-center bg-gradient-to-r from-yellow-100 to-yellow-200 px-3 py-1 rounded-full shadow-md hover:shadow-lg transition-shadow duration-200">
-                <FaCoins className="text-amber-400 mr-1 text-sm" />
-                <span className="text-black font-bold text-sm">
-                  {balanceLoading ? (
-                    <span className="animate-pulse">...</span>
-                  ) : balance !== null ? (
-                    balance
-                  ) : (
-                    '0'
-                  )}
-                </span>
-              </div>
+            {!hideMobileIcons && (
+              <div className="flex items-center space-x-3 ml-auto z-10">
+                {/* Coin Balance */}
+                <div className="flex items-center bg-gradient-to-r from-yellow-100 to-yellow-200 px-3 py-1 rounded-full shadow-md hover:shadow-lg transition-shadow duration-200">
+                  <FaCoins className="text-amber-400 mr-1 text-sm" />
+                  <span className="text-black font-bold text-sm">
+                    {balanceLoading ? (
+                      <span className="animate-pulse">...</span>
+                    ) : balance !== null ? (
+                      balance
+                    ) : (
+                      '0'
+                    )}
+                  </span>
+                </div>
 
-              {/* Profile Button */}
-              <button
-                onClick={() => handleNavigation('/profile')}
-                className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                title="Profile"
-              >
-                <FaUser className="text-gray-600" />
-              </button>
-            </div>
+                {/* Profile Button */}
+                <button
+                  onClick={() => handleNavigation('/profile')}
+                  className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  title="Profile"
+                >
+                  <FaUser className="text-gray-600" />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Page Content */}

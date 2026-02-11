@@ -59,7 +59,6 @@ const AuctionManagement = forwardRef((_props, ref) => {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     // TODO: Upload to server and update images array
-    console.log('Selected files:', files);
   };
 
   const handleSave = () => {
@@ -77,7 +76,6 @@ const AuctionManagement = forwardRef((_props, ref) => {
     }
 
     // TODO: Save to backend
-    console.log('Saving auction data:', auctionData);
     setShowModal(false);
     // alert('Auction settings saved successfully!');
   };

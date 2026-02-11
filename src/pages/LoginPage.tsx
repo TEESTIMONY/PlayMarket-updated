@@ -2,34 +2,40 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLoading } from '../contexts/LoadingContext';
+import GoogleSignInButton from '../components/GoogleSignInButton';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, loginWithGoogle } = useAuth();
   const { showLoading, hideLoading } = useLoading();
   const [username, setUsername] = useState('testuser');
   const [password, setPassword] = useState('password123');
 
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/bounties');
+    }
+  }, [isAuthenticated, navigate]);
+
   const handleLogin = () => {
     // Use the auth context to login
-    login(username, password);
-    navigate('/bounties'); // Redirect to bounties page
+    // Note: This would be for traditional login, but we're using Firebase
   };
 
   const handleGoogleSignIn = async () => {
-    // Mock Google sign-in - in real implementation, this would integrate with Google OAuth
-    console.log('Google sign-in clicked');
-
     // Show loading state during authentication
     showLoading();
 
     try {
-      // Use the auth context to login with admin credentials
-      // In production, this would be replaced with actual Google OAuth
-      login('admin', 'SecureAdminPass123!');
-
-      // Redirect to bounties page
+      // Use Firebase Google Sign-In
+      await loginWithGoogle();
+      
+      // Redirect to bounties page after successful sign-in
       navigate('/bounties');
+    } catch (error) {
+      console.error('Google Sign-In failed:', error);
+      // Error will be handled by AuthContext
     } finally {
       // Always hide loading state
       hideLoading();

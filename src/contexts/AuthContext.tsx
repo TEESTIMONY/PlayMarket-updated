@@ -1,14 +1,34 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
+import { jwtDecode } from 'jwt-decode';
 import { apiService } from '../services/api';
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
 
 interface AuthContextType {
   isAuthenticated: boolean;
   username: string | null;
+  email: string | null;
   balance: number | null;
   balanceLoading: boolean;
-  login: (username: string, password: string) => void;
-  logout: () => void;
+  isLoading: boolean;
+  loginWithGoogle: () => Promise<void>;
+  logout: () => Promise<void>;
   refreshBalance: () => Promise<void>;
 }
 
@@ -21,7 +41,6 @@ export const useAuth = () => {
   }
   return context;
 };
-// testtttt
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -30,52 +49,136 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
   const [balanceLoading, setBalanceLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Check authentication state on mount
   useEffect(() => {
-    // Check if user is already logged in
-    const storedUsername = localStorage.getItem('username');
-    const storedPassword = localStorage.getItem('password');
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // User is signed in
+        const token = await user.getIdToken();
+        localStorage.setItem('firebase_token', token);
+        
+        // Send token to backend to get JWT
+        try {
+          const response = await fetch('/api/auth/login/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ id_token: token }),
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            localStorage.setItem('jwt_token', data.token);
+            setIsAuthenticated(true);
+            setUsername(data.user.username);
+            setEmail(data.user.email);
+            
+            // Fetch balance
+            await fetchBalance();
+          } else {
+            // Handle authentication error
+            console.error('Authentication failed');
+            await handleLogout();
+          }
+        } catch (error) {
+          console.error('Authentication error:', error);
+          await handleLogout();
+        }
+      } else {
+        // User is signed out
+        setIsAuthenticated(false);
+        setUsername(null);
+        setEmail(null);
+        setBalance(null);
+        localStorage.removeItem('firebase_token');
+        localStorage.removeItem('jwt_token');
+      }
+      setIsLoading(false);
+    });
 
-    if (storedUsername && storedPassword) {
-      setIsAuthenticated(true);
-      setUsername(storedUsername);
-    }
+    return () => unsubscribe();
   }, []);
 
-  // Separate effect for balance management when authenticated
+  // Fetch balance when authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      // Fetch real balance from API
-      const fetchBalance = async () => {
-        setBalanceLoading(true);
-        try {
-          const response = await apiService.getUserBalance();
-          setBalance(response.balance);
-          localStorage.setItem('lastBalanceRefresh', Date.now().toString());
-        } catch (error) {
-          console.error('Failed to refresh balance:', error);
-          // Keep existing balance or set to 0 if API fails
-          setBalance(prev => prev || 0);
-        } finally {
-          setBalanceLoading(false);
-        }
-      };
       fetchBalance();
     }
   }, [isAuthenticated]);
 
-  const login = (username: string, password: string) => {
-    // In a real app, this would validate credentials with the server
-    // For now, we'll just mock authentication
-    localStorage.setItem('username', username);
-    localStorage.setItem('password', password);
-    setIsAuthenticated(true);
-    setUsername(username);
+  const fetchBalance = async () => {
+    if (!isAuthenticated) return;
     
-    // Store credentials for API authentication
-    localStorage.setItem('token', btoa(`${username}:${password}`));
+    setBalanceLoading(true);
+    try {
+      const response = await apiService.getUserBalance();
+      setBalance(response.balance);
+      localStorage.setItem('lastBalanceRefresh', Date.now().toString());
+    } catch (error) {
+      console.error('Failed to refresh balance:', error);
+      // Keep existing balance or set to 0 if API fails
+      setBalance(prev => prev || 0);
+    } finally {
+      setBalanceLoading(false);
+    }
+  };
+
+  const loginWithGoogle = async () => {
+    setIsLoading(true);
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      const token = await user.getIdToken();
+      
+      localStorage.setItem('firebase_token', token);
+      
+      // Send token to backend to get JWT
+      const response = await fetch('/api/auth/login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id_token: token }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('jwt_token', data.token);
+        setIsAuthenticated(true);
+        setUsername(data.user.username);
+        setEmail(data.user.email);
+        
+        // Fetch balance
+        await fetchBalance();
+      } else {
+        throw new Error('Authentication failed');
+      }
+    } catch (error) {
+      console.error('Google Sign-In error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setIsAuthenticated(false);
+      setUsername(null);
+      setEmail(null);
+      setBalance(null);
+      localStorage.removeItem('firebase_token');
+      localStorage.removeItem('jwt_token');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   const refreshBalance = async () => {
@@ -95,23 +198,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('username');
-    localStorage.removeItem('password');
-    localStorage.removeItem('admin_username');
-    localStorage.removeItem('admin_password');
-    setIsAuthenticated(false);
-    setUsername(null);
-    setBalance(null);
-  };
-
   const value: AuthContextType = {
     isAuthenticated,
     username,
+    email,
     balance,
     balanceLoading,
-    login,
-    logout,
+    isLoading,
+    loginWithGoogle,
+    logout: handleLogout,
     refreshBalance,
   };
 

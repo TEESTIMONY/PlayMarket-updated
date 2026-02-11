@@ -156,7 +156,6 @@ const BountiesManagement = forwardRef(({ onActionButtonVisibilityChange }: { onA
       }
       
       // Log the approval with user and reward information
-      console.log(`✅ Bounty approved! ${selectedClaim.bounty_title} - Reward sent to user: ${selectedClaim.user_username}`);
     } catch (error) {
       console.error('Failed to approve claim:', error);
       alert('Failed to approve claim. Please try again.');
