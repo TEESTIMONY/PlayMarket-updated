@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .status { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Authentication Test</h1>
+    
+    <div id="status" class="status info">Testing authentication flow...</div>
+    
+    <button onclick="testLocalStorage()">Test LocalStorage</button>
+    <button onclick="testFirebaseConfig()">Test Firebase Config</button>
+    <button onclick="testAPIEndpoint()">Test API Endpoint</button>
+    <button onclick="clearAuthData()">Clear Auth Data</button>
+    
+    <div id="results"></div>
+
+    <script>
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            document.getElementById('results').appendChild(div);
+        }
+
+        function testLocalStorage() {
+            try {
+                const firebaseToken = localStorage.getItem('firebase_token');
+                const jwtToken = localStorage.getItem('jwt_token');
+                
+                addResult(`Firebase Token: ${firebaseToken ? 'Present' : 'Missing'}`, firebaseToken ? 'success' : 'error');
+                addResult(`JWT Token: ${jwtToken ? 'Present' : 'Missing'}`, jwtToken ? 'success' : 'error');
+            } catch (error) {
+                addResult(`LocalStorage Error: ${error.message}`, 'error');
+            }
+        }
+
+        function testFirebaseConfig() {
+            try {
+                const config = {
+                    apiKey: window.location.hostname.includes('localhost') ? 'AIzaSyC5yOzUJskjdy0mtju_GRCak2sfhOeEswQ' : null,
+                    authDomain: 'playmarket-6aae1.firebaseapp.com',
+                    projectId: 'playmarket-6aae1',
+                    storageBucket: 'playmarket-6aae1.firebasestorage.app',
+                    messagingSenderId: '955863205589',
+                    appId: '1:955863205589:web:6aa5a99646a5d92816045c'
+                };
+                
+                addResult('Firebase Config loaded successfully', 'success');
+                addResult(`API Key: ${config.apiKey ? 'Present' : 'Missing'}`, config.apiKey ? 'success' : 'error');
+            } catch (error) {
+                addResult(`Firebase Config Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAPIEndpoint() {
+            try {
+                const baseURL = 'http://127.0.0.1:8000';
+                const response = await fetch(`${baseURL}/api/auth/login/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id_token: 'test_token' })
+                });
+                
+                addResult(`API Response Status: ${response.status}`, response.ok ? 'success' : 'error');
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    addResult(`Error Response: ${errorText}`, 'error');
+                }
+            } catch (error) {
+                addResult(`API Test Error: ${error.message}`, 'error');
+            }
+        }
+
+        function clearAuthData() {
+            try {
+                localStorage.removeItem('firebase_token');
+                localStorage.removeItem('jwt_token');
+                addResult('Authentication data cleared', 'success');
+            } catch (error) {
+                addResult(`Clear Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Initial test
+        testLocalStorage();
+    </script>
+</body>
+</html>

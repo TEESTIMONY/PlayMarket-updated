@@ -65,6 +65,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Send token to backend to get JWT
         try {
           const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+          console.log('Attempting authentication with backend at:', baseURL);
+          
           const response = await fetch(`${baseURL}/api/auth/login/`, {
             method: 'POST',
             headers: {
@@ -73,18 +75,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             body: JSON.stringify({ id_token: token }),
           });
           
+          console.log('Backend response status:', response.status);
+          
           if (response.ok) {
             const data = await response.json();
+            console.log('Authentication successful, user:', data.user.username);
             localStorage.setItem('jwt_token', data.token);
             setIsAuthenticated(true);
             setUsername(data.user.username);
             setEmail(data.user.email);
             
-            // Fetch balance
-            await fetchBalance();
+            // Fetch balance after authentication is fully established
+            setTimeout(() => fetchBalance(), 100);
           } else {
             // Handle authentication error
-            console.error('Authentication failed');
+            const errorText = await response.text();
+            console.error('Authentication failed:', response.status, errorText);
             await handleLogout();
           }
         } catch (error) {
@@ -141,6 +147,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // Send token to backend to get JWT
       const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+      console.log('Attempting Google Sign-In with backend at:', baseURL);
+      
       const response = await fetch(`${baseURL}/api/auth/login/`, {
         method: 'POST',
         headers: {
@@ -149,16 +157,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         body: JSON.stringify({ id_token: token }),
       });
       
+      console.log('Google Sign-In response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('Google Sign-In successful, user:', data.user.username);
         localStorage.setItem('jwt_token', data.token);
         setIsAuthenticated(true);
         setUsername(data.user.username);
         setEmail(data.user.email);
         
-        // Fetch balance
-        await fetchBalance();
+        // Fetch balance after authentication is fully established
+        setTimeout(() => fetchBalance(), 100);
       } else {
+        const errorText = await response.text();
+        console.error('Google Sign-In failed:', response.status, errorText);
         throw new Error('Authentication failed');
       }
     } catch (error) {
