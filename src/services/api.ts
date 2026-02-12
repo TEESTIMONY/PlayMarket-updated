@@ -65,10 +65,6 @@ class ApiService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), SECURITY_CONFIG.API_TIMEOUT);
 
-      if (import.meta.env.DEV) {
-        console.log(`API Request: ${defaultOptions.method || 'GET'} ${url}`);
-        console.log('JWT Token present:', !!jwtToken);
-      }
 
       const response = await fetch(url, { ...defaultOptions, signal: controller.signal });
       clearTimeout(timeoutId);
