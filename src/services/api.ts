@@ -109,6 +109,13 @@ export interface UserAuctionHistory {
 class ApiService {
   private baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
+  private normalizeMediaPath(path: string): string {
+    if (path.startsWith('/media/')) return path;
+    if (path.startsWith('/auction_images/')) return `/media${path}`;
+    if (path.startsWith('auction_images/')) return `/media/${path}`;
+    return path;
+  }
+
   private getApiOrigin(): string {
     try {
       const parsed = new URL(this.baseURL, window.location.origin);
@@ -139,17 +146,30 @@ class ApiService {
     const url = urlValue.trim();
     if (!url) return '';
 
+    const origin = this.getApiOrigin();
+
     if (
       url.startsWith('http://') ||
       url.startsWith('https://') ||
       url.startsWith('blob:') ||
       url.startsWith('data:')
     ) {
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        try {
+          const parsed = new URL(url);
+          const normalizedPath = this.normalizeMediaPath(parsed.pathname);
+          if (normalizedPath.startsWith('/media/')) {
+            return `${origin}${normalizedPath}${parsed.search}${parsed.hash}`;
+          }
+        } catch {
+          // fall through to default absolute URL normalization
+        }
+      }
       return this.normalizeAbsoluteUrl(url);
     }
 
-    const origin = this.getApiOrigin();
-    return url.startsWith('/') ? `${origin}${url}` : `${origin}/${url}`;
+    const normalizedPath = this.normalizeMediaPath(url.startsWith('/') ? url : `/${url}`);
+    return `${origin}${normalizedPath}`;
   }
 
   private normalizeAuction(auction: any): Auction {
