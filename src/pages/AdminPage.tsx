@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaBars, FaTimes, FaPlus, FaSave } from 'react-icons/fa';
+import { FaBars, FaTimes, FaPlus } from 'react-icons/fa';
 import UserManagement from '../components/admin/UserManagement';
 import BountiesManagement from '../components/admin/BountiesManagement';
 import AuctionManagement from '../components/admin/AuctionManagement';
@@ -29,7 +29,7 @@ const AdminPage: React.FC = () => {
     { id: 'playmarket', label: 'Playmarket', title: 'Playmarket', actionLabel: '', actionIcon: '', component: null, isLink: true, path: '/' },
     { id: 'users', label: 'User Management', title: 'User Management', actionLabel: 'Add New User', actionIcon: 'FaPlus', component: UserManagement },
     { id: 'bounties', label: 'Bounties', title: 'Bounties Management', actionLabel: 'Add New Bounty', actionIcon: 'FaPlus', component: BountiesManagement },
-    { id: 'auction', label: 'Auction', title: 'Auction Management', actionLabel: '', actionIcon: '', component: AuctionManagement },
+    { id: 'auction', label: 'Auction', title: 'Auction Management', actionLabel: 'Create Auction', actionIcon: 'FaPlus', component: AuctionManagement },
     { id: 'redeem', label: 'Redeem Codes', title: 'Redeem Codes Management', actionLabel: 'Add New Code', actionIcon: 'FaPlus', component: RedeemCodesManagement },
   ];
 
@@ -50,7 +50,7 @@ const AdminPage: React.FC = () => {
     if (activeTab === 'bounties' && bountiesRef.current) {
       bountiesRef.current.openModal();
     } else if (activeTab === 'auction' && auctionRef.current) {
-      auctionRef.current.openModal();
+      auctionRef.current.openCreateModal();
     } else if (activeTab === 'redeem' && redeemRef.current) {
       redeemRef.current.openModal();
     }
@@ -104,16 +104,14 @@ const AdminPage: React.FC = () => {
             </button>
             <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-800">{activeTabData.title}</h2>
           </div>
-          {activeTabData.actionLabel && showActionButton && (
+          {activeTabData.actionLabel && showActionButton && activeTab !== 'auction' && (
             <button
               onClick={handleActionClick}
-              className={`px-3 py-2 md:px-4 md:py-2 text-sm md:text-base rounded-lg transition-colors whitespace-nowrap ${
-                activeTab === 'auction' ? 'bg-green text-white hover:bg-green-700' : 'bg-blue-600 text-white hover:bg-blue-700'
-              }`}
+              className="px-3 py-2 md:px-4 md:py-2 text-sm md:text-base rounded-lg transition-colors whitespace-nowrap bg-blue-600 text-white hover:bg-blue-700"
             >
-              {activeTab === 'auction' ? <FaSave className="inline mr-1 md:mr-2" /> : <FaPlus className="inline mr-1 md:mr-2" />}
+              <FaPlus className="inline mr-1 md:mr-2" />
               <span className="hidden md:inline">{activeTabData.actionLabel}</span>
-              <span className="md:hidden">{activeTab === 'auction' ? 'Save' : 'Add'}</span>
+              <span className="md:hidden">Add</span>
             </button>
           )}
         </div>

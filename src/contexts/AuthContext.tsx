@@ -54,41 +54,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [balanceLoading, setBalanceLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  const exchangeFirebaseToken = async (idToken: string) => {
+    const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
+    const response = await fetch(`${baseURL}/api/auth/login/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ id_token: idToken }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Authentication failed (${response.status}): ${errorText}`);
+    }
+
+    return response.json();
+  };
+
   // Check authentication state on mount
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         // User is signed in
-        const token = await user.getIdToken();
+        const token = await user.getIdToken(true);
         localStorage.setItem('firebase_token', token);
         
         // Send token to backend to get JWT
         try {
-          const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-          
-          const response = await fetch(`${baseURL}/api/auth/login/`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ id_token: token }),
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            localStorage.setItem('jwt_token', data.token);
-            setIsAuthenticated(true);
-            setUsername(data.user.username);
-            setEmail(data.user.email);
-            
-            // Fetch balance after authentication is fully established
-            setTimeout(() => fetchBalance(), 100);
-          } else {
-            // Handle authentication error
-            const errorText = await response.text();
-            console.error('Authentication failed:', response.status, errorText);
-            await handleLogout();
-          }
+          const data = await exchangeFirebaseToken(token);
+          localStorage.setItem('jwt_token', data.token);
+          setIsAuthenticated(true);
+          setUsername(data.user.username);
+          setEmail(data.user.email);
+
+          // Fetch balance after authentication is fully established
+          setTimeout(() => fetchBalance(), 100);
         } catch (error) {
           console.error('Authentication error:', error);
           await handleLogout();
@@ -137,35 +139,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
-      const token = await user.getIdToken();
+      const token = await user.getIdToken(true);
       
       localStorage.setItem('firebase_token', token);
-      
-      // Send token to backend to get JWT
-      const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-      
-      const response = await fetch(`${baseURL}/api/auth/login/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id_token: token }),
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('jwt_token', data.token);
-        setIsAuthenticated(true);
-        setUsername(data.user.username);
-        setEmail(data.user.email);
-        
-        // Fetch balance after authentication is fully established
-        setTimeout(() => fetchBalance(), 100);
-      } else {
-        const errorText = await response.text();
-        console.error('Google Sign-In failed:', response.status, errorText);
-        throw new Error('Authentication failed');
-      }
+
+      const data = await exchangeFirebaseToken(token);
+      localStorage.setItem('jwt_token', data.token);
+      setIsAuthenticated(true);
+      setUsername(data.user.username);
+      setEmail(data.user.email);
+
+      // Fetch balance after authentication is fully established
+      setTimeout(() => fetchBalance(), 100);
     } catch (error) {
       console.error('Google Sign-In error:', error);
       throw error;

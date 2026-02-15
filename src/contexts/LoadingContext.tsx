@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import type { ReactNode } from 'react';
 
 interface LoadingContextType {
@@ -29,22 +29,37 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = ({ children }) =>
   const [loadingCount, setLoadingCount] = useState(0);
   const isLoading = loadingCount > 0;
 
-  const incrementLoading = () => setLoadingCount(prev => prev + 1);
-  const decrementLoading = () => setLoadingCount(prev => Math.max(0, prev - 1));
-  
-  const showLoading = () => incrementLoading();
-  const hideLoading = () => decrementLoading();
+  const incrementLoading = useCallback(() => {
+    setLoadingCount(prev => prev + 1);
+  }, []);
 
-  return (
-    <LoadingContext.Provider value={{ 
-      isLoading, 
-      setIsLoading: (loading) => setLoadingCount(loading ? 1 : 0),
-      showLoading, 
+  const decrementLoading = useCallback(() => {
+    setLoadingCount(prev => Math.max(0, prev - 1));
+  }, []);
+  
+  const showLoading = useCallback(() => {
+    incrementLoading();
+  }, [incrementLoading]);
+
+  const hideLoading = useCallback(() => {
+    decrementLoading();
+  }, [decrementLoading]);
+
+  const contextValue = useMemo(
+    () => ({
+      isLoading,
+      setIsLoading: (loading: boolean) => setLoadingCount(loading ? 1 : 0),
+      showLoading,
       hideLoading,
       loadingCount,
       incrementLoading,
-      decrementLoading
-    }}>
+      decrementLoading,
+    }),
+    [isLoading, showLoading, hideLoading, loadingCount, incrementLoading, decrementLoading]
+  );
+
+  return (
+    <LoadingContext.Provider value={contextValue}>
       {children}
     </LoadingContext.Provider>
   );

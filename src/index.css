@@ -180,3 +180,17 @@ a:hover {
 .animate-scale-in {
   animation: scale-in 0.3s ease-out;
 }
+
+/* Ensure spinner arrows are visible for auction time number inputs */
+.auction-time-input {
+  appearance: auto;
+  -webkit-appearance: auto;
+  -moz-appearance: auto;
+}
+
+.auction-time-input::-webkit-inner-spin-button,
+.auction-time-input::-webkit-outer-spin-button {
+  -webkit-appearance: inner-spin-button;
+  opacity: 1;
+  margin: 0;
+}

@@ -35,6 +35,77 @@ export interface BountyClaim {
   created_at: string;
 }
 
+// Auction interfaces
+export interface Auction {
+  id: number;
+  title: string;
+  description: string;
+  minimum_bid: number;
+  current_highest_bid: number | null;
+  highest_bidder: string | null;
+  starts_at: string;
+  ends_at: string;
+  status: 'upcoming' | 'active' | 'ended' | 'cancelled';
+  created_by: number;
+  created_at: string;
+  updated_at: string;
+  bid_count: number;
+  images?: string[];
+}
+
+// Error response interface for single auction constraint
+export interface AuctionError {
+  error: string;
+  active_auction?: {
+    id: number;
+    title: string;
+    ends_at: string;
+  };
+}
+
+export interface AuctionBid {
+  id: number;
+  auction: number;
+  user: number;
+  user_username: string;
+  amount: number;
+  created_at: string;
+  remaining_coins?: number;
+  extension_applied?: boolean;
+  extension_minutes?: number;
+  new_ends_at?: string | null;
+  extension_message?: string | null;
+}
+
+export interface AuctionWinner {
+  id: number;
+  auction: number;
+  user: number;
+  user_username: string;
+  winning_bid: number;
+  coins_deducted: number;
+  created_at: string;
+}
+
+export interface AuctionLeaderboard {
+  auction_id: number;
+  current_highest_bid: number | null;
+  current_highest_bidder: string | null;
+  total_bids: number;
+  top_bidders: Array<{
+    user__username: string;
+    total_bids: number;
+    highest_bid: number;
+  }>;
+}
+
+export interface UserAuctionHistory {
+  bids: AuctionBid[];
+  wins: AuctionWinner[];
+  total_bids: number;
+  total_wins: number;
+}
+
 class ApiService {
   private baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -51,10 +122,11 @@ class ApiService {
   private async request(endpoint: string, options: RequestInit = {}): Promise<any> {
     const url = `${this.baseURL}${endpoint}`;
     const jwtToken = localStorage.getItem(SECURITY_CONFIG.TOKEN_STORAGE_KEY);
+    const isFormData = options.body instanceof FormData;
 
     const defaultOptions: RequestInit = {
       headers: {
-        'Content-Type': 'application/json',
+        ...(!isFormData && { 'Content-Type': 'application/json' }),
         ...(jwtToken && { 'Authorization': `Bearer ${jwtToken}` }),
         ...options.headers
       },
@@ -207,6 +279,56 @@ class ApiService {
 
   async getAllClaims(): Promise<{ count: number; results: BountyClaim[] }> {
     return this.request('/bounties/admin/bounty-claims/');
+  }
+
+  // Auction endpoints
+  async getAuctions(): Promise<{ count: number; results: Auction[] }> {
+    return this.request('/bounties/auctions/');
+  }
+
+  async getAuction(id: number): Promise<Auction> {
+    return this.request(`/bounties/auctions/${id}/`);
+  }
+
+  async createAuction(data: Partial<Auction> | FormData): Promise<Auction> {
+    return this.request('/bounties/auctions/create/', {
+      method: 'POST',
+      body: data instanceof FormData ? data : JSON.stringify(data)
+    });
+  }
+
+  async deleteAuction(id: number): Promise<{ message: string }> {
+    return this.request(`/bounties/auctions/${id}/delete/`, {
+      method: 'DELETE'
+    });
+  }
+
+  async updateAuctionStatus(id: number, data: { status: 'upcoming' | 'active' | 'ended' | 'cancelled' }): Promise<Auction> {
+    return this.request(`/bounties/auctions/${id}/status/`, {
+      method: 'PATCH',
+      body: JSON.stringify(data)
+    });
+  }
+
+  async endAuction(id: number): Promise<AuctionWinner> {
+    return this.request(`/bounties/auctions/${id}/end/`, {
+      method: 'POST'
+    });
+  }
+
+  async placeBid(auctionId: number, amount: number): Promise<AuctionBid> {
+    return this.request(`/bounties/auctions/${auctionId}/bid/`, {
+      method: 'POST',
+      body: JSON.stringify({ amount })
+    });
+  }
+
+  async getAuctionLeaderboard(auctionId: number): Promise<AuctionLeaderboard> {
+    return this.request(`/bounties/auctions/${auctionId}/leaderboard/`);
+  }
+
+  async getUserAuctionHistory(): Promise<UserAuctionHistory> {
+    return this.request('/bounties/auctions/user/history/');
   }
 }
 
