@@ -51,6 +51,7 @@ export interface Auction {
   updated_at: string;
   bid_count: number;
   images?: string[];
+  image_files?: Array<{ image?: string | null }>;
 }
 
 // Error response interface for single auction constraint
@@ -175,11 +176,21 @@ class ApiService {
   private normalizeAuction(auction: any): Auction {
     if (!auction || typeof auction !== 'object') return auction;
 
-    const normalizedImages = Array.isArray(auction.images)
+    const normalizedImagesFromImagesField = Array.isArray(auction.images)
       ? auction.images
           .map((image: unknown) => this.resolveAssetUrl(image))
           .filter((image: string) => Boolean(image))
       : [];
+
+    const normalizedImagesFromImageFiles = Array.isArray(auction.image_files)
+      ? auction.image_files
+          .map((item: any) => this.resolveAssetUrl(item?.image))
+          .filter((image: string) => Boolean(image))
+      : [];
+
+    const normalizedImages = normalizedImagesFromImagesField.length > 0
+      ? normalizedImagesFromImagesField
+      : normalizedImagesFromImageFiles;
 
     return {
       ...auction,
