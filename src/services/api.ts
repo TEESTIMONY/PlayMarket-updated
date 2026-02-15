@@ -109,6 +109,64 @@ export interface UserAuctionHistory {
 class ApiService {
   private baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
+  private getApiOrigin(): string {
+    try {
+      const parsed = new URL(this.baseURL, window.location.origin);
+      if (window.location.protocol === 'https:' && parsed.protocol === 'http:') {
+        parsed.protocol = 'https:';
+      }
+      return `${parsed.protocol}//${parsed.host}`;
+    } catch {
+      return window.location.origin;
+    }
+  }
+
+  private normalizeAbsoluteUrl(url: string): string {
+    try {
+      const parsed = new URL(url);
+      if (window.location.protocol === 'https:' && parsed.protocol === 'http:') {
+        parsed.protocol = 'https:';
+      }
+      return parsed.toString();
+    } catch {
+      return url;
+    }
+  }
+
+  private resolveAssetUrl(urlValue: unknown): string {
+    if (typeof urlValue !== 'string') return '';
+
+    const url = urlValue.trim();
+    if (!url) return '';
+
+    if (
+      url.startsWith('http://') ||
+      url.startsWith('https://') ||
+      url.startsWith('blob:') ||
+      url.startsWith('data:')
+    ) {
+      return this.normalizeAbsoluteUrl(url);
+    }
+
+    const origin = this.getApiOrigin();
+    return url.startsWith('/') ? `${origin}${url}` : `${origin}/${url}`;
+  }
+
+  private normalizeAuction(auction: any): Auction {
+    if (!auction || typeof auction !== 'object') return auction;
+
+    const normalizedImages = Array.isArray(auction.images)
+      ? auction.images
+          .map((image: unknown) => this.resolveAssetUrl(image))
+          .filter((image: string) => Boolean(image))
+      : [];
+
+    return {
+      ...auction,
+      images: normalizedImages,
+    };
+  }
+
   constructor() {
     if (!this.baseURL) {
       // Silent failure for production - don't expose configuration errors to users
@@ -283,18 +341,37 @@ class ApiService {
 
   // Auction endpoints
   async getAuctions(): Promise<{ count: number; results: Auction[] }> {
-    return this.request('/bounties/auctions/');
+    const data = await this.request('/bounties/auctions/');
+
+    if (Array.isArray(data)) {
+      return {
+        count: data.length,
+        results: data.map((auction) => this.normalizeAuction(auction)),
+      };
+    }
+
+    if (Array.isArray(data?.results)) {
+      return {
+        ...data,
+        results: data.results.map((auction: Auction) => this.normalizeAuction(auction)),
+      };
+    }
+
+    return data;
   }
 
   async getAuction(id: number): Promise<Auction> {
-    return this.request(`/bounties/auctions/${id}/`);
+    const data = await this.request(`/bounties/auctions/${id}/`);
+    return this.normalizeAuction(data);
   }
 
   async createAuction(data: Partial<Auction> | FormData): Promise<Auction> {
-    return this.request('/bounties/auctions/create/', {
+    const createdAuction = await this.request('/bounties/auctions/create/', {
       method: 'POST',
       body: data instanceof FormData ? data : JSON.stringify(data)
     });
+
+    return this.normalizeAuction(createdAuction);
   }
 
   async deleteAuction(id: number): Promise<{ message: string }> {
