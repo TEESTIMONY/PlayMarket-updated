@@ -36,7 +36,7 @@ const BountiesManagement = forwardRef(({ onActionButtonVisibilityChange }: { onA
       setLoading(true);
       const [bountiesResponse, claimsResponse] = await Promise.all([
         apiService.getBounties(),
-        apiService.getUserClaims()
+        apiService.getAllClaims()
       ]);
       setBounties(bountiesResponse.results);
       setClaims(claimsResponse.results);
