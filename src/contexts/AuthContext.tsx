@@ -22,6 +22,7 @@ const googleProvider = new GoogleAuthProvider();
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  isAdmin: boolean;
   username: string | null;
   email: string | null;
   balance: number | null;
@@ -48,6 +49,7 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
@@ -86,6 +88,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const data = await exchangeFirebaseToken(token);
           localStorage.setItem('jwt_token', data.token);
           setIsAuthenticated(true);
+          setIsAdmin(Boolean(data?.user?.is_admin));
           setUsername(data.user.username);
           setEmail(data.user.email);
 
@@ -98,6 +101,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } else {
         // User is signed out
         setIsAuthenticated(false);
+        setIsAdmin(false);
         setUsername(null);
         setEmail(null);
         setBalance(null);
@@ -146,6 +150,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const data = await exchangeFirebaseToken(token);
       localStorage.setItem('jwt_token', data.token);
       setIsAuthenticated(true);
+      setIsAdmin(Boolean(data?.user?.is_admin));
       setUsername(data.user.username);
       setEmail(data.user.email);
 
@@ -163,6 +168,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await signOut(auth);
       setIsAuthenticated(false);
+      setIsAdmin(false);
       setUsername(null);
       setEmail(null);
       setBalance(null);
@@ -192,6 +198,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const value: AuthContextType = {
     isAuthenticated,
+    isAdmin,
     username,
     email,
     balance,

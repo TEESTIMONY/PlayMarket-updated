@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaBars, FaTimes, FaPlus } from 'react-icons/fa';
+import { useAuth } from '../contexts/AuthContext';
 import UserManagement from '../components/admin/UserManagement';
 import BountiesManagement from '../components/admin/BountiesManagement';
 import AuctionManagement from '../components/admin/AuctionManagement';
@@ -8,16 +9,14 @@ import RedeemCodesManagement from '../components/admin/RedeemCodesManagement';
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, isAdmin } = useAuth();
 
-  // Check for admin authentication on component mount
+  // Strict gate: only authenticated super-admin users should access this page.
   useEffect(() => {
-    const adminUsername = localStorage.getItem('admin_username');
-    const adminPassword = localStorage.getItem('admin_password');
-
-    if (!adminUsername || !adminPassword) {
+    if (!isAuthenticated || !isAdmin) {
       navigate('/admin-login');
     }
-  }, [navigate]);
+  }, [isAuthenticated, isAdmin, navigate]);
   const [activeTab, setActiveTab] = useState('users');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showActionButton, setShowActionButton] = useState(true);

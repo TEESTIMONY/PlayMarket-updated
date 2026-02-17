@@ -1,6 +1,6 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Suspense, lazy, useState, useEffect } from 'react';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LoadingProvider, useLoading } from './contexts/LoadingContext';
 
 // Lazy load pages for faster initial load
@@ -46,6 +46,8 @@ const EnhancedLoadingFallback: React.FC = () => {
 };
 
 function AppContent() {
+  const { isAuthenticated, isAdmin, isLoading } = useAuth();
+
   return (
     <Router>
       <Suspense fallback={<EnhancedLoadingFallback />}>
@@ -56,7 +58,18 @@ function AppContent() {
           <Route path="/bounties" element={<BountiesPage />} />
           <Route path="/redeem" element={<RedeemPage />} />
           <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/admin/super-secret-key" element={<AdminPage />} />
+          <Route
+            path="/admin/super-secret-key"
+            element={
+              isLoading ? (
+                <EnhancedLoadingFallback />
+              ) : (isAuthenticated && isAdmin) ? (
+                <AdminPage />
+              ) : (
+                <Navigate to="/admin-login" replace />
+              )
+            }
+          />
         </Routes>
       </Suspense>
     </Router>
