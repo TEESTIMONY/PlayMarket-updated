@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import Sidebar from '../components/Sidebar';
-import { FaUser, FaCoins, FaShoppingCart, FaTrophy, FaHistory, FaCog, FaHome, FaGavel } from 'react-icons/fa';
+import { FaUser, FaCoins, FaShoppingCart, FaTrophy, FaHistory, FaCog, FaHome, FaGavel, FaExchangeAlt } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
 
@@ -33,6 +33,12 @@ const ProfilePage = () => {
     email: ''
   });
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [pointTransfers, setPointTransfers] = useState<any[]>([]);
+  const [transferAmount, setTransferAmount] = useState<string>('');
+  const [transferLoading, setTransferLoading] = useState(false);
+  const [transferError, setTransferError] = useState<string | null>(null);
+  const [transferSuccess, setTransferSuccess] = useState<string | null>(null);
+  const [flashSuccessMessage, setFlashSuccessMessage] = useState<string | null>(null);
   const [claimsHistory, setClaimsHistory] = useState<any[]>([]);
   const [redeemCodesHistory, setRedeemCodesHistory] = useState<any[]>([]);
   const [statistics, setStatistics] = useState<any>(null);
@@ -58,20 +64,22 @@ const ProfilePage = () => {
         });
         
         // Fetch additional profile data from individual endpoints
-        const [claimsData, transactionsData, redeemData, balanceData] = await Promise.all([
+        const [claimsData, transactionsData, redeemData, balanceData, pointTransfersData] = await Promise.all([
           apiService.getUserClaims(),
           apiService.getUserTransactions(),
           apiService.getRedeemCodes(),
-          apiService.getUserBalance()
+          apiService.getUserBalance(),
+          apiService.getPointTransfers(),
         ]);
         
         setClaimsHistory(claimsData.results || []);
         setTransactions(transactionsData.transactions || []);
+        setPointTransfers(pointTransfersData.transfers || []);
         setRedeemCodesHistory(redeemData.results?.filter(code => code.status === 'used') || []);
         
         // Set the balance from the separate balance endpoint
         if (balanceData && balanceData.balance !== undefined) {
-          setUser(prev => ({ ...prev, balance: balanceData.balance }));
+          setUser((prev: any) => (prev ? { ...prev, balance: balanceData.balance } : prev));
         }
       } catch (err) {
         console.error('Error fetching user profile:', err);
@@ -101,11 +109,22 @@ const ProfilePage = () => {
     };
   }, [isDropdownOpen]);
 
+  useEffect(() => {
+    if (!flashSuccessMessage) return;
+
+    const timeoutId = setTimeout(() => {
+      setFlashSuccessMessage(null);
+    }, 3200);
+
+    return () => clearTimeout(timeoutId);
+  }, [flashSuccessMessage]);
+
   const navigationItems = [
     { id: 'overview', name: 'Overview', icon: FaHome },
     { id: 'auctions', name: 'My Auctions', icon: FaGavel },
     { id: 'bounties', name: 'My Bounties', icon: FaTrophy },
     { id: 'transactions', name: 'Transactions', icon: FaHistory },
+    { id: 'point-transfers', name: 'Point Transfers', icon: FaExchangeAlt },
   ];
 
   const handleEdit = () => {
@@ -120,6 +139,58 @@ const ProfilePage = () => {
       ...prev,
       [e.target.name]: e.target.value
     }));
+  };
+
+  const refreshPointTransfers = async () => {
+    try {
+      const data = await apiService.getPointTransfers();
+      setPointTransfers(data.transfers || []);
+    } catch (err) {
+      console.error('Failed to refresh point transfers', err);
+    }
+  };
+
+  const handlePointTransferSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTransferError(null);
+    setTransferSuccess(null);
+    setFlashSuccessMessage(null);
+
+    const parsedAmount = Number(transferAmount);
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      setTransferError('Enter a valid amount greater than 0.');
+      return;
+    }
+
+    try {
+      setTransferLoading(true);
+      const result = await apiService.createPointTransfer(parsedAmount);
+      setTransferSuccess(`Transfer successful. Transfer ID: ${result.transfer_id}`);
+      setFlashSuccessMessage(`✅ Coins received successfully! +${result?.transferred ?? parsedAmount} added to your balance.`);
+      setTransferAmount('');
+
+      if (result?.new_balance !== undefined) {
+        setUser((prev: any) => (prev ? { ...prev, balance: result.new_balance } : prev));
+      }
+
+      await refreshPointTransfers();
+    } catch (err: any) {
+      const rawMessage = String(err?.message || '');
+      const message =
+        rawMessage.includes('TRANSFER_SERVICE_NOT_CONFIGURED')
+          ? 'Point transfer service is not configured yet. Please contact admin to set PLAYENGINE_API_KEY on the backend.'
+          : rawMessage.includes('INSUFFICIENT_BALANCE')
+            ? 'Insufficient balance on PlayEngine.'
+            : rawMessage.includes('USER_NOT_FOUND')
+              ? 'User not found on PlayEngine.'
+              : rawMessage.includes('INVALID_AMOUNT')
+                ? 'Invalid amount. Please enter a value greater than 0.'
+                : 'Transfer failed. Please try again.';
+      setTransferError(message);
+      setFlashSuccessMessage(null);
+    } finally {
+      setTransferLoading(false);
+    }
   };
 
 
@@ -338,6 +409,109 @@ const ProfilePage = () => {
                         </div>
                       </div>
                     ))}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      case 'point-transfers':
+        return (
+          <div className="space-y-6">
+            {flashSuccessMessage && (
+              <div className="fixed top-6 right-6 z-50 bg-green-100 border border-green-300 text-green-800 px-5 py-3 rounded-lg shadow-xl animate-pulse">
+                {flashSuccessMessage}
+              </div>
+            )}
+
+            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+              <h2 className="text-xl font-bold mb-6 text-gray-900 flex items-center">
+                <FaExchangeAlt className="mr-3 text-gray-600" />
+                Point Transfers
+              </h2>
+
+              <form onSubmit={handlePointTransferSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                  <input
+                    type="email"
+                    value={user?.email || ''}
+                    disabled
+                    readOnly
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Email is locked and always enforced by backend from your authenticated account.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Amount</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={transferAmount}
+                    onChange={(e) => setTransferAmount(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter amount to transfer"
+                    required
+                  />
+                </div>
+
+                {transferError && (
+                  <div className="bg-red-50 border border-red-200 text-red px-4 py-3 rounded-lg">
+                    {transferError}
+                  </div>
+                )}
+
+                {transferSuccess && (
+                  <div className="bg-green-50 border border-green-200 text-green px-4 py-3 rounded-lg">
+                    {transferSuccess}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={transferLoading}
+                  className="bg-black hover:bg-gray-800 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg transition-colors"
+                >
+                  {transferLoading ? 'Processing...' : 'Transfer Points'}
+                </button>
+              </form>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+              <h3 className="text-lg font-bold mb-4 text-gray-900">Transfer History</h3>
+              {pointTransfers.length === 0 ? (
+                <p className="text-gray-600 text-center py-8">No point transfers yet</p>
+              ) : (
+                <div className="space-y-3">
+                  {pointTransfers.map((tx, idx) => (
+                    <div key={idx} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="flex justify-between items-start gap-4">
+                        <div>
+                          <p className="font-semibold text-gray-900">Amount: {tx.amount}</p>
+                          <p className="text-sm font-medium text-gray-800">
+                            Status:{' '}
+                            <span className={tx.status === 'success' ? 'text-green-700' : 'text-red-700'}>
+                              {tx.status === 'success' ? 'Successful' : 'Failed'}
+                            </span>
+                          </p>
+                          <p className="text-sm text-gray-600">Transfer ID: {tx.transfer_id}</p>
+                          <p className="text-sm text-gray-600">{new Date(tx.created_at).toLocaleString()}</p>
+                          {tx.error && <p className="text-sm text-red-600">Error: {tx.error}</p>}
+                        </div>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            tx.status === 'success'
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-red-100 text-red-700'
+                          }`}
+                        >
+                          {tx.status === 'success' ? 'SUCCESSFUL' : 'FAILED'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

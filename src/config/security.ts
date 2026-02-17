@@ -71,6 +71,11 @@ export function validateApiResponse(response: any): boolean {
  * Secure error handling
  */
 export function handleApiError(error: any, context: string = ''): void {
+  // Expected business/API validation errors (4xx) should not be noisy in console
+  if (error?.status && error.status >= 400 && error.status < 500) {
+    return;
+  }
+
   if (import.meta.env.DEV) {
     console.error(`API Error in ${context}:`, sanitizeForLogging(error));
   } else {

@@ -107,6 +107,16 @@ export interface UserAuctionHistory {
   total_wins: number;
 }
 
+export interface PointTransferItem {
+  id: number;
+  amount: number;
+  status: 'success' | 'failed';
+  transfer_id: string;
+  error: string;
+  created_at: string;
+  credited_balance: number | null;
+}
+
 class ApiService {
   private baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -231,8 +241,30 @@ class ApiService {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        let errorPayload: any = null;
+        let errorText = '';
+
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          try {
+            errorPayload = await response.json();
+          } catch {
+            errorPayload = null;
+          }
+        }
+
+        if (!errorPayload) {
+          errorText = await response.text();
+        }
+
+        const apiError: any = new Error(
+          errorPayload?.error ||
+          errorPayload?.message ||
+          `HTTP error! status: ${response.status}${errorText ? `, message: ${errorText}` : ''}`
+        );
+        apiError.status = response.status;
+        apiError.data = errorPayload;
+        throw apiError;
       }
 
       const data = await response.json();
@@ -243,8 +275,11 @@ class ApiService {
       }
 
       return data;
-    } catch (error) {
-      handleApiError(error, `request to ${endpoint}`);
+    } catch (error: any) {
+      // Don't noisy-log expected business validation failures from API (4xx)
+      if (!(error?.status && error.status >= 400 && error.status < 500)) {
+        handleApiError(error, `request to ${endpoint}`);
+      }
       throw error;
     }
   }
@@ -344,6 +379,17 @@ class ApiService {
 
   async getUserTransactions(): Promise<any> {
     return this.request('/bounties/transactions/');
+  }
+
+  async getPointTransfers(): Promise<{ transfers: PointTransferItem[]; count: number }> {
+    return this.request('/bounties/point-transfers/');
+  }
+
+  async createPointTransfer(amount: number): Promise<any> {
+    return this.request('/bounties/point-transfers/', {
+      method: 'POST',
+      body: JSON.stringify({ amount })
+    });
   }
 
   async getBountyClaimsHistory(): Promise<any> {
